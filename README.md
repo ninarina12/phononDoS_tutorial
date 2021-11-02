@@ -3,7 +3,8 @@
 
 ### Installation
 1. Clone the repository:
-	> `git clone https://github.com/ninarina12/phononDoS_tutorial.git`
+	> git clone https://github.com/ninarina12/phononDoS_tutorial.git
+
 	> `cd phononDoS_tutorial`
 
 2. Create a virtual environment for the project:  

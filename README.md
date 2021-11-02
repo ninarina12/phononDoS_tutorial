@@ -1,3 +1,5 @@
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ninarina12/phononDoS_tutorial/main)
+
 ## Tutorial: Predicting Phonon DoS with Euclidean Neural Networks
 ### 2021 MRS Fall Meeting
 

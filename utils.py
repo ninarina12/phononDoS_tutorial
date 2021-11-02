@@ -43,11 +43,13 @@ plt.rcParams['xtick.labelsize'] = fontsize
 plt.rcParams['ytick.labelsize'] = fontsize
 plt.rcParams['legend.fontsize'] = textsize
 
+
 # colors for datasets
 palette = ['#2876B2', '#F39957', '#67C7C2']
 datasets = ['train', 'valid', 'test']
 colors = dict(zip(datasets, palette))
 cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', [palette[k] for k in [0,2,1]])
+
 
 def load_data(filename):
     # load data from a csv file and derive formula and species columns from structure

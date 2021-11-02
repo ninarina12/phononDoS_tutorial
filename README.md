@@ -1,6 +1,9 @@
 ## Tutorial: Predicting Phonon DoS with Euclidean Neural Networks
 ### 2021 MRS Fall Meeting
 
+### Run in Google Colaboratory
+Click here: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ninarina12/phononDoS_tutorial/blob/main/phononDoS_colab.ipynb)
+
 ### Local installation
 1. Clone the repository:
 	> `git clone https://github.com/ninarina12/phononDoS_tutorial.git`
@@ -12,7 +15,7 @@
 
 	> `conda activate pdos`
 
-3. Install necessary packages:
+3. Install all necessary packages:
 	> `pip install -r requirements.txt -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html`
 
 	where `${TORCH}` and `${CUDA}` should be replaced by the specific CUDA version (e.g. `cu102`) and PyTorch version (e.g. `1.10.0`), respectively. For example:

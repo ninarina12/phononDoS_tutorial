@@ -3,17 +3,20 @@
 
 ### Installation
 1. Clone the repository:
-	> git clone https://github.com/ninarina12/phononDoS_tutorial.git
+	> `git clone https://github.com/ninarina12/phononDoS_tutorial.git`
 
 	> `cd phononDoS_tutorial`
 
-2. Create a virtual environment for the project:  
+2. Create a virtual environment for the project:
 	> `conda create -n pdos python=3.9`
+
 	> `conda activate pdos`
 
 3. Install necessary packages:
 	> `pip install -r requirements.txt -f https://pytorch-geometric.com/whl/torch-${TORCH}+${CUDA}.html`
-	> where `${TORCH}` and `${CUDA}` should be replaced by the specific CUDA version (e.g. `cu102`) and PyTorch version (e.g. `1.10.0`), respectively. For example:
+
+	where `${TORCH}` and `${CUDA}` should be replaced by the specific CUDA version (e.g. `cu102`) and PyTorch version (e.g. `1.10.0`), respectively. For example:
+
 	> `pip install -r requirements.txt -f https://pytorch-geometric.com/whl/torch-1.10.0+cu102.html`
 
 ### References

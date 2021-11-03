@@ -1,5 +1,5 @@
-## Tutorial: Predicting Phonon DoS with Euclidean Neural Networks
-### 2021 MRS Fall Meeting
+## Tutorial: Predicting phonon DoS with Euclidean neural networks
+### 2021 MRS Fall Meeting | Symmetry-aware neural networks for the material sciences
 
 This tutorial is presented through an interactive Jupyter Notebook. We invite you to follow along with the code examples through either of the two options below:
 

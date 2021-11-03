@@ -2,13 +2,9 @@
 import torch
 import torch_geometric as tg
 
-# crystal structure data
-from pymatgen.io.cif import CifParser
-
 # data pre-processing
 import numpy as np
 import pandas as pd
-import re
 from sklearn.model_selection import train_test_split
 
 # data visualization
@@ -56,29 +52,27 @@ def load_data(filename):
     df = pd.read_csv(filename)
     
     print('parsing cif files ...')
-    df['structure'] = df['structure'].progress_map(lambda x: CifParser.from_string(x).get_structures()[0])
+    df['structure'] = df['structure'].apply(eval).progress_map(lambda x: Atoms.fromdict(x))
     
     df['phfreq'] = df['phfreq'].apply(eval).apply(np.array)
     df['phdos'] = df['phdos'].apply(eval).apply(np.array)
     
-    df['phfreq_orig'] = df['phfreq_orig'].apply(eval).apply(np.array)
-    df['phdos_orig'] = df['phdos_orig'].apply(eval).apply(np.array)
-    
-    df['formula'] = df['structure'].map(lambda x: x.formula.replace(' ', ''))
-    df['species'] = df['formula'].map(lambda x: re.split(r'(\d*\.?\d+)', x)[:-1:2])
+    df['formula'] = df['structure'].map(lambda x: x.get_chemical_formula())
+    df['species'] = df['structure'].map(lambda x: list(set(x.get_chemical_symbols())))
     species = sorted(list(set(df['species'].sum())))
     return df, species
 
 
-def train_valid_test_split(df, species, seed=12, plot=False):
+def train_valid_test_split(df, species, valid_size, test_size, seed=12, plot=False):
     # perform an element-balanced train/valid/teset split
     print('split train/dev ...')
+    dev_size = valid_size + test_size
     stats = get_element_statistics(df, species)
-    idx_train, idx_dev = split_data(stats, 0.2, seed)
+    idx_train, idx_dev = split_data(stats, dev_size, seed)
     
     print('split valid/test ...')
     stats_dev = get_element_statistics(df.iloc[idx_dev], species)
-    idx_valid, idx_test = split_data(stats_dev, 0.5, seed)
+    idx_valid, idx_test = split_data(stats_dev, test_size/dev_size, seed)
     
     print('number of training examples:', len(idx_train))
     print('number of validation examples:', len(idx_valid))

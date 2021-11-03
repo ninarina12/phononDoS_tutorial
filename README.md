@@ -6,7 +6,7 @@ This tutorial is presented through an interactive Jupyter Notebook. We invite yo
 #### 1. Run in Google Colaboratory
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ninarina12/phononDoS_tutorial/blob/main/phononDoS_colab.ipynb)
 
-If you don't have access to a GPU but would like the GPU-experience, or simply want to try out the code before intalling anything locally, click the Colab badge above to run the notebook in Google Colaboratory. Package imports are handled within the notebook.
+If you don't have access to a GPU or simply want to try out the code before installing anything locally, click the Colab badge above to run the notebook in Google Colaboratory. Package imports are handled within the notebook.
 
 #### 2. Work from a local installation
 To work from a local copy of the code:

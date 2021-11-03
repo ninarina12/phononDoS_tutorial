@@ -246,11 +246,11 @@ def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn
     except:
         history = []
         results = {}
-        step0 = 0
+        s0 = 0
     else:
         model.load_state_dict(torch.load(run_name + '.torch')['state'])
         history = results['history']
-        step0 = history[-1]['step'] + 1
+        s0 = history[-1]['step'] + 1
 
 
     for step in range(max_iter):
@@ -281,7 +281,7 @@ def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn
             train_avg_loss = evaluate(model, dataloader_train, loss_fn, loss_fn_mae, device)
 
             history.append({
-                'step': step0 + step,
+                'step': s0 + step,
                 'wall': wall,
                 'batch': {
                     'loss': loss.item(),

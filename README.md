@@ -1,14 +1,14 @@
 ## Tutorial: Predicting Phonon DoS with Euclidean Neural Networks
 ### 2021 MRS Fall Meeting
 
-This tutorial is presented through a Jupyter Notebook. We invite you to follow along with the code examples through one of two options below:
+This tutorial is presented through an interactive Jupyter Notebook. We invite you to follow along with the code examples through either of the two options below:
 
-### 1. Run in Google Colaboratory
+#### 1. Run in Google Colaboratory
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ninarina12/phononDoS_tutorial/blob/main/phononDoS_colab.ipynb)
 
 If you don't have access to a GPU but would like the GPU-experience, or simply want to try out the code before intalling anything locally, click the Colab badge above to run the notebook in Google Colaboratory. Package imports are handled within the notebook.
 
-### 2. Work from a local installation
+#### 2. Work from a local installation
 To work from a local copy of the code:
 
 1. Clone the repository:

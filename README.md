@@ -33,4 +33,4 @@ To work from a local copy of the code:
 ### References
 Zhantao Chen, Nina Andrejevic, Tess Smidt, et al. "Direct Prediction of Phonon Density of States With Euclidean Neural Networks." Advanced Science (2021): 2004214. https://onlinelibrary.wiley.com/doi/10.1002/advs.202004214
 
-Mario Geiger, Tess Smidt, Alby M., Benjamin Kurt Miller, *et al.* Euclidean neural networks: e3nn (2020) v0.3.3. https://doi.org/10.5281/zenodo.5292912.
+Mario Geiger, Tess Smidt, Alby M., Benjamin Kurt Miller, *et al.* Euclidean neural networks: e3nn (2020) v0.4.1. https://doi.org/10.5281/zenodo.5292912.

@@ -234,26 +234,35 @@ def evaluate(model, dataloader, loss_fn, loss_fn_mae, device):
     return loss_cumulative/len(dataloader), loss_cumulative_mae/len(dataloader)
 
 
-def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn_mae, max_iter=101, scheduler=None,
-          device="cpu"):
+def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn_mae, run_name,
+          max_iter=101, scheduler=None, device="cpu"):
     model.to(device)
 
     checkpoint_generator = loglinspace(0.3, 5)
     checkpoint = next(checkpoint_generator)
     start_time = time.time()
-    dynamics = []
+
+    try: results = torch.load(run_name + '.torch')
+    except:
+        history = []
+        results = {}
+        step0 = 0
+    else:
+        model.load_state_dict(torch.load(run_name + '.torch')['state'])
+        history = results['history']
+        step0 = history[-1]['step'] + 1
+
 
     for step in range(max_iter):
         model.train()
         loss_cumulative = 0.
         loss_cumulative_mae = 0.
-        for j, d in enumerate(dataloader_train):
+        
+        for j, d in tqdm(enumerate(dataloader_train), total=len(dataloader_train), bar_format=bar_format):
             d.to(device)
             output = model(d)
             loss = loss_fn(output, d.phdos).cpu()
             loss_mae = loss_fn_mae(output, d.phdos).cpu()
-            print(f"Iteration {step+1:4d}    batch {j+1:5d} / {len(dataloader_train):5d}   " +
-                  f"batch loss = {loss.data}", end="\r", flush=True)
             loss_cumulative = loss_cumulative + loss.detach().item()
             loss_cumulative_mae = loss_cumulative_mae + loss_mae.detach().item()
 
@@ -271,8 +280,8 @@ def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn
             valid_avg_loss = evaluate(model, dataloader_valid, loss_fn, loss_fn_mae, device)
             train_avg_loss = evaluate(model, dataloader_train, loss_fn, loss_fn_mae, device)
 
-            dynamics.append({
-                'step': step,
+            history.append({
+                'step': step0 + step,
                 'wall': wall,
                 'batch': {
                     'loss': loss.item(),
@@ -288,15 +297,18 @@ def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn
                 },
             })
 
-            yield {
-                'dynamics': dynamics,
+            results = {
+                'history': history,
                 'state': model.state_dict()
             }
 
-            print(f"Iteration {step+1:4d}    batch {j+1:5d} / {len(dataloader_train):5d}   " +
+            print(f"Iteration {step+1:4d}   " +
                   f"train loss = {train_avg_loss[0]:8.3f}   " +
                   f"valid loss = {valid_avg_loss[0]:8.3f}   " +
                   f"elapsed time = {time.strftime('%H:%M:%S', time.gmtime(wall))}")
+
+            with open(run_name + '.torch', 'wb') as f:
+                torch.save(results, f)
 
         if scheduler is not None:
             scheduler.step()

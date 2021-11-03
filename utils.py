@@ -6,6 +6,7 @@ import torch_geometric as tg
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from scipy.stats import gaussian_kde
 
 # data visualization
 import matplotlib as mpl
@@ -41,11 +42,10 @@ plt.rcParams['legend.fontsize'] = textsize
 
 
 # colors for datasets
-palette = ['#2876B2', '#F39957', '#67C7C2']
+palette = ['#2876B2', '#F39957', '#67C7C2', '#C86646']
 datasets = ['train', 'valid', 'test']
-colors = dict(zip(datasets, palette))
+colors = dict(zip(datasets, palette[:-1]))
 cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', [palette[k] for k in [0,2,1]])
-
 
 def load_data(filename):
     # load data from a csv file and derive formula and species columns from structure
@@ -171,10 +171,12 @@ def split_subplot(ax, df, species, dataset, bottom=0., legend=False):
 def plot_example(df, i=12, label_edges=False):
     # plot an example crystal structure and graph
     entry = df.iloc[i]['data']
-    fig, ax = plt.subplots(1,2, figsize=(14,14))
 
     # get graph with node and edge attributes
     g = tg.utils.to_networkx(entry, node_attrs=['symbol'], edge_attrs=['edge_len'], to_undirected=True)
+
+    # remove self-loop edges for plotting
+    g.remove_edges_from(list(nx.selfloop_edges(g)))
     node_labels = dict(zip([k[0] for k in g.nodes.data()], [k[1]['symbol'] for k in g.nodes.data()]))
     edge_labels = dict(zip([(k[0], k[1]) for k in g.edges.data()], [k[2]['edge_len'] for k in g.edges.data()]))
 
@@ -182,6 +184,7 @@ def plot_example(df, i=12, label_edges=False):
     pos = dict(zip(list(g.nodes), [np.roll(k,2)[:-1][::-1] for k in entry.pos.numpy()]))
 
     # plot unit cell
+    fig, ax = plt.subplots(1,2, figsize=(14,10))
     atoms = Atoms(symbols=entry.symbol, positions=entry.pos.numpy(), cell=entry.lattice.squeeze().numpy(), pbc=True)
     symbols = np.unique(entry.symbol)
     z = dict(zip(symbols, range(len(symbols))))
@@ -198,10 +201,10 @@ def plot_example(df, i=12, label_edges=False):
     # format axes
     ax[0].set_xlabel(r'$x_1\ (\AA)$')
     ax[0].set_ylabel(r'$x_2\ (\AA)$')
-    ax[0].set_title('Crystal structure')
+    ax[0].set_title('Crystal structure', fontsize=fontsize)
     ax[1].set_aspect('equal')
     ax[1].axis('off')
-    ax[1].set_title('Crystal graph')
+    ax[1].set_title('Crystal graph', fontsize=fontsize)
     pad = np.array([-0.5, 0.5])
     ax[1].set_xlim(np.array(ax[1].get_xlim()) + pad)
     ax[1].set_ylim(np.array(ax[1].get_ylim()) + pad)
@@ -310,15 +313,41 @@ def plot_predictions(df, idx, title=None):
     s = np.concatenate([np.sort(np.random.randint(iq[k-1], iq[k], size=n)) for k in range(1,5)])
     x = df.iloc[0]['phfreq']
 
-    fig = plt.figure(figsize=(14,3))
+    fig, axs = plt.subplots(4,n+1, figsize=(14,3))
+    gs = axs[0,0].get_gridspec()
+    
+    # remove the underlying axes
+    for ax in axs[:,0]:
+        ax.remove()
+
+    # add long axis
+    axl = fig.add_subplot(gs[:,0])
+
+    # plot quartile distribution
+    y_min, y_max = ds['mse'].min(), ds['mse'].max()
+    y = np.linspace(y_min, y_max, 500)
+    kde = gaussian_kde(ds['mse'])
+    p = kde.pdf(y)
+    axl.plot(p, y, color='black')
+    cols = [palette[k] for k in [2,0,1,3]][::-1]
+    qs =  list(quartiles)[::-1] + [0]
+    for i in range(len(qs)-1):
+        axl.fill_between([p.min(), p.max()], y1=[qs[i], qs[i]], y2=[qs[i+1], qs[i+1]], color=cols[i], lw=0, alpha=0.5)
+    axl.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+    axl.invert_yaxis()
+    axl.set_xticks([])
+    axl.set_ylabel('MSE')
+
     fontsize = 12
+    cols = np.repeat(cols[::-1], n)
+    axs = axs[:,1:].ravel()
     for k in range(4*n):
-        ax = fig.add_subplot(4,n,k+1)
+        ax = axs[k]
         i = s[k]
         ax.plot(x, ds.iloc[i]['phdos'], color='black')
-        ax.plot(x, ds.iloc[i]['phdos_pred'], color=palette[0])
+        ax.plot(x, ds.iloc[i]['phdos_pred'], color=cols[k])
         ax.set_xticks([]); ax.set_yticks([])
         
     fig.tight_layout()
     fig.subplots_adjust(hspace=0.25)
-    if title: fig.suptitle(title, ha='center', y=1.05)
+    if title: fig.suptitle(title, ha='center', y=1., fontsize=fontsize + 4)

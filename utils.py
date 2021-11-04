@@ -29,6 +29,7 @@ tqdm.pandas(bar_format=bar_format)
 # standard formatting for plots
 fontsize = 16
 textsize = 14
+sub = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 plt.rcParams['font.family'] = 'lato'
 plt.rcParams['axes.linewidth'] = 1
 plt.rcParams['mathtext.default'] = 'regular'
@@ -242,6 +243,7 @@ def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn
     checkpoint = next(checkpoint_generator)
     start_time = time.time()
 
+
     try: results = torch.load(run_name + '.torch')
     except:
         history = []
@@ -325,7 +327,7 @@ def plot_predictions(df, idx, title=None):
     s = np.concatenate([np.sort(np.random.randint(iq[k-1], iq[k], size=n)) for k in range(1,5)])
     x = df.iloc[0]['phfreq']
 
-    fig, axs = plt.subplots(4,n+1, figsize=(14,3))
+    fig, axs = plt.subplots(4,n+1, figsize=(14,3.5))
     gs = axs[0,0].get_gridspec()
     
     # remove the underlying axes
@@ -359,7 +361,8 @@ def plot_predictions(df, idx, title=None):
         ax.plot(x, ds.iloc[i]['phdos'], color='black')
         ax.plot(x, ds.iloc[i]['phdos_pred'], color=cols[k])
         ax.set_xticks([]); ax.set_yticks([])
+        ax.set_title(ds.iloc[i]['formula'].translate(sub), fontsize=fontsize, y=0.95)
         
     fig.tight_layout()
-    fig.subplots_adjust(hspace=0.25)
+    fig.subplots_adjust(hspace=0.6)
     if title: fig.suptitle(title, ha='center', y=1., fontsize=fontsize + 4)

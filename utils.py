@@ -57,6 +57,7 @@ def load_data(filename):
     
     df['phfreq'] = df['phfreq'].apply(eval).apply(np.array)
     df['phdos'] = df['phdos'].apply(eval).apply(np.array)
+    df['pdos'] = df['pdos'].apply(eval)
     
     df['formula'] = df['structure'].map(lambda x: x.get_chemical_formula())
     df['species'] = df['structure'].map(lambda x: list(set(x.get_chemical_symbols())))

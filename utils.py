@@ -213,6 +213,32 @@ def plot_example(df, i=12, label_edges=False):
     fig.subplots_adjust(wspace=0.4)
 
 
+def visualize_layers(model):
+    layer_dst = dict(zip(['sc', 'lin1', 'tp', 'lin2'], ['gate', 'tp', 'lin2', 'gate']))
+    num_layers = len(model.mp.layers)
+    num_ops = max([len([k for k in list(model.mp.layers[i].first._modules.keys()) if k not in ['fc', 'alpha']])
+                   for i in range(num_layers-1)])
+
+    fig, ax = plt.subplots(num_layers, num_ops, figsize=(14,3.5*num_layers))
+    for i in range(num_layers - 1):
+        ops = model.mp.layers[i].first._modules.copy()
+        ops.pop('fc', None); ops.pop('alpha', None)
+        for j, (k, v) in enumerate(ops.items()):
+            ax[i,j].set_title(k, fontsize=textsize)
+            v.cpu().visualize(ax=ax[i,j])
+            ax[i,j].text(0.7,-0.15,'--> to ' + layer_dst[k], fontsize=textsize-2, transform=ax[i,j].transAxes)
+
+    layer_dst = dict(zip(['sc', 'lin1', 'tp', 'lin2'], ['gate', 'tp', 'lin2', 'output']))
+    ops = model.mp.layers[-1]._modules.copy()
+    ops.pop('fc', None); ops.pop('alpha', None)
+    for j, (k, v) in enumerate(ops.items()):
+        ax[-1,j].set_title(k, fontsize=textsize)
+        v.cpu().visualize(ax=ax[-1,j])
+        ax[-1,j].text(0.7,-0.15,'--> to ' + layer_dst[k], fontsize=textsize-2, transform=ax[-1,j].transAxes)
+
+    fig.subplots_adjust(wspace=0.3, hspace=0.5)
+
+
 def loglinspace(rate, step, end=None):
     t = 0
     while end is None or t <= end:
@@ -306,8 +332,8 @@ def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn
             }
 
             print(f"Iteration {step+1:4d}   " +
-                  f"train loss = {train_avg_loss[0]:8.3f}   " +
-                  f"valid loss = {valid_avg_loss[0]:8.3f}   " +
+                  f"train loss = {train_avg_loss[0]:8.4f}   " +
+                  f"valid loss = {valid_avg_loss[0]:8.4f}   " +
                   f"elapsed time = {time.strftime('%H:%M:%S', time.gmtime(wall))}")
 
             with open(run_name + '.torch', 'wb') as f:
@@ -367,3 +393,50 @@ def plot_predictions(df, idx, title=None):
     fig.tight_layout()
     fig.subplots_adjust(hspace=0.6)
     if title: fig.suptitle(title, ha='center', y=1., fontsize=fontsize + 4)
+
+
+def plot_partial_predictions(model, df, idx, device='cpu'):
+    # randomly sample r compounds from the dataset
+    r = 6
+    ids = np.random.choice(df.iloc[idx][df.iloc[idx]['pdos'].str.len()>0].index.tolist(), size=r)
+    
+    # initialize figure axes
+    N = df.iloc[ids]['species'].str.len().max()
+    fig, ax = plt.subplots(r, N+1, figsize=(2.8*(N+1),1.2*r), sharex=True, sharey=True)
+
+    # predict output of each site for each sample
+    for row, i in enumerate(ids):
+        entry = df.iloc[i]
+        d = tg.data.Batch.from_data_list([entry.data])
+
+        model.eval()
+        with torch.no_grad():
+            d.to(device)
+            output = model(d).cpu().numpy()
+
+        # average contributions from the same specie over all sites
+        n = len(entry.species)
+        pdos = dict(zip(entry.species, [np.zeros((output.shape[1])) for k in range(n)]))
+        for j in range(output.shape[0]):
+            pdos[entry.data.symbol[j]] += output[j,:]
+
+        for j, s in enumerate(entry.species):
+            pdos[s] /= entry.data.symbol.count(s)
+
+        # plot total DoS
+        ax[row,0].plot(entry.phfreq, entry.phdos, color='black')
+        ax[row,0].plot(entry.phfreq, entry.phdos_pred, color=palette[0])
+        ax[row,0].set_title(entry.formula.translate(sub), fontsize=fontsize - 2, y=0.99)
+
+        # plot partial DoS
+        for j, s in enumerate(entry.species):
+            ax[row,j+1].plot(entry.phfreq, entry.pdos[s], color='black')
+            ax[row,j+1].plot(entry.phfreq, pdos[s], color=palette[1], lw=2)
+            ax[row,j+1].set_title(s, fontsize=fontsize - 2, y=0.99)
+        
+        for j in range(len(entry.species) + 1, N+1):
+            ax[row,j].remove()
+
+    fig.supylabel('$I/I_{max}$', fontsize=fontsize, x=0.07)
+    fig.supxlabel(r'$\omega\ (cm^{-1})$', fontsize=fontsize, y=0.04)
+    fig.subplots_adjust(hspace=0.5)

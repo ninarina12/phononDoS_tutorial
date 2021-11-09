@@ -354,7 +354,7 @@ def plot_predictions(df, idx, title=None):
     s = np.concatenate([np.sort(np.random.randint(iq[k-1], iq[k], size=n)) for k in range(1,5)])
     x = df.iloc[0]['phfreq']
 
-    fig, axs = plt.subplots(4,n+1, figsize=(14,3.5))
+    fig, axs = plt.subplots(4,n+1, figsize=(13,3.5), gridspec_kw={'width_ratios': [0.7] + [1]*n})
     gs = axs[0,0].get_gridspec()
     
     # remove the underlying axes

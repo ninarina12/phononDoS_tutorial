@@ -66,7 +66,7 @@ def load_data(filename):
 
 
 def train_valid_test_split(df, species, valid_size, test_size, seed=12, plot=False):
-    # perform an element-balanced train/valid/teset split
+    # perform an element-balanced train/valid/test split
     print('split train/dev ...')
     dev_size = valid_size + test_size
     stats = get_element_statistics(df, species)
@@ -75,13 +75,14 @@ def train_valid_test_split(df, species, valid_size, test_size, seed=12, plot=Fal
     print('split valid/test ...')
     stats_dev = get_element_statistics(df.iloc[idx_dev], species)
     idx_valid, idx_test = split_data(stats_dev, test_size/dev_size, seed)
-    
+    idx_train += df[~df.index.isin(idx_train + idx_valid + idx_test)].index.tolist()
+
     print('number of training examples:', len(idx_train))
     print('number of validation examples:', len(idx_valid))
     print('number of testing examples:', len(idx_test))
     print('total number of examples:', len(idx_train + idx_valid + idx_test))
     assert len(set.intersection(*map(set, [idx_train, idx_valid, idx_test]))) == 0
-    
+
     if plot:
         # plot element representation in each dataset
         stats['train'] = stats['data'].map(lambda x: element_representation(x, np.sort(idx_train)))
@@ -402,7 +403,7 @@ def plot_partial_predictions(model, df, idx, device='cpu'):
     
     # initialize figure axes
     N = df.iloc[ids]['species'].str.len().max()
-    fig, ax = plt.subplots(r, N+1, figsize=(2.8*(N+1),1.2*r), sharex=True, sharey=True)
+    fig, ax = plt.subplots(r, N+1, figsize=(2.4*(N+1),1.2*r), sharex=True, sharey=True)
 
     # predict output of each site for each sample
     for row, i in enumerate(ids):
@@ -427,16 +428,18 @@ def plot_partial_predictions(model, df, idx, device='cpu'):
         ax[row,0].plot(entry.phfreq, entry.phdos, color='black')
         ax[row,0].plot(entry.phfreq, entry.phdos_pred, color=palette[0])
         ax[row,0].set_title(entry.formula.translate(sub), fontsize=fontsize - 2, y=0.99)
+        ax[row,0].set_xticks([]); ax[row,0].set_yticks([])
 
         # plot partial DoS
         for j, s in enumerate(entry.species):
             ax[row,j+1].plot(entry.phfreq, entry.pdos[s], color='black')
             ax[row,j+1].plot(entry.phfreq, pdos[s], color=palette[1], lw=2)
             ax[row,j+1].set_title(s, fontsize=fontsize - 2, y=0.99)
-        
+            ax[row,j+1].set_xticks([]); ax[row,j+1].set_yticks([])
+
         for j in range(len(entry.species) + 1, N+1):
             ax[row,j].remove()
 
-    fig.supylabel('$I/I_{max}$', fontsize=fontsize, x=0.07)
-    fig.supxlabel(r'$\omega\ (cm^{-1})$', fontsize=fontsize, y=0.04)
-    fig.subplots_adjust(hspace=0.5)
+    fig.supylabel('Intensity', fontsize=fontsize, x=0.08)
+    fig.supxlabel('Frequency', fontsize=fontsize, y=0.06)
+    fig.subplots_adjust(hspace=0.8)

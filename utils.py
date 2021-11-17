@@ -272,13 +272,13 @@ def train(model, optimizer, dataloader_train, dataloader_valid, loss_fn, loss_fn
     start_time = time.time()
 
 
-    try: results = torch.load(run_name + '.torch')
+    try: model.load_state_dict(torch.load(run_name + '.torch')['state'])
     except:
-        history = []
         results = {}
+        history = []
         s0 = 0
     else:
-        model.load_state_dict(torch.load(run_name + '.torch')['state'])
+        results = torch.load(run_name + '.torch')
         history = results['history']
         s0 = history[-1]['step'] + 1
 

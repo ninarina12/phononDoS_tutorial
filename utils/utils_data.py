@@ -309,7 +309,7 @@ def plot_partials(model, df, idx, device='cpu'):
         # plot partial DoS
         for j, s in enumerate(entry.species):
             ax[row,j+1].plot(entry.phfreq, entry.pdos[s], color='black')
-            ax[row,j+1].plot(entry.phfreq, pdos[s], color=palette[1], lw=2)
+            ax[row,j+1].plot(entry.phfreq, pdos[s]/pdos[s].max(), color=palette[1], lw=2)
             ax[row,j+1].set_title(s, fontsize=fontsize - 2, y=0.99)
             ax[row,j+1].set_xticks([]); ax[row,j+1].set_yticks([])
 

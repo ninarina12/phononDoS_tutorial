@@ -6,9 +6,8 @@ from e3nn.io import SphericalTensor
 
 def plot_orbitals(traces, traces_species, title_str, show_fig=False):
     traces = [go.Surface(**d) for d in traces]
-    # traces_species = [go.Scatter3d(**d) for d in traces_species]
-    # fig = go.Figure(data= (traces + traces_species))
     fig = go.Figure(data= (traces))
+    fig.update_traces(showscale=False)
     if show_fig: fig.show()
     fig.update_layout(
         title=title_str,

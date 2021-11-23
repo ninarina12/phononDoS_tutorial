@@ -316,6 +316,7 @@ def plot_partials(model, df, idx, device='cpu'):
         for j in range(len(entry.species) + 1, N+1):
             ax[row,j].remove()
 
-    fig.supylabel('Intensity', fontsize=fontsize, x=0.08)
-    fig.supxlabel('Frequency', fontsize=fontsize, y=0.06)
+    try: fig.supylabel('Intensity', fontsize=fontsize, x=0.08)
+    except: pass
+    else: fig.supxlabel('Frequency', fontsize=fontsize, y=0.06)
     fig.subplots_adjust(hspace=0.8)

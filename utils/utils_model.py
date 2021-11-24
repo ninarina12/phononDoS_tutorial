@@ -2,10 +2,12 @@ from typing import Dict, Union
 
 import torch
 from torch_geometric.data import Data
+from torch_cluster import radius_graph
+
 from e3nn import o3
 from e3nn.math import soft_one_hot_linspace
-from e3nn.nn import Gate, ExtractIr
-from e3nn.nn.models.gate_points_2102 import Convolution, smooth_cutoff, tp_path_exists
+from e3nn.nn import Gate
+from e3nn.nn.models.gate_points_2101 import Convolution, smooth_cutoff, tp_path_exists
 
 import matplotlib.pyplot as plt
 import math
@@ -45,7 +47,7 @@ class CustomCompose(torch.nn.Module):
         x = self.second(x)
         self.second_out = x.clone()
         return x
-        
+
 
 class Network(torch.nn.Module):
     r"""equivariant neural network
@@ -84,20 +86,22 @@ class Network(torch.nn.Module):
     def __init__(
         self,
         irreps_in,
-        irreps_hidden,
         irreps_out,
         irreps_node_attr,
-        irreps_edge_attr,
         layers,
+        mul,
+        lmax,
         max_radius,
-        number_of_basis,
-        radial_layers,
-        radial_neurons,
-        num_neighbors,
-        num_nodes,
+        number_of_basis=10,
+        radial_layers=1,
+        radial_neurons=100,
+        num_neighbors=1.,
+        num_nodes=1.,
         reduce_output=True,
     ) -> None:
         super().__init__()
+        self.mul = mul
+        self.lmax = lmax
         self.max_radius = max_radius
         self.number_of_basis = number_of_basis
         self.num_neighbors = num_neighbors
@@ -105,16 +109,13 @@ class Network(torch.nn.Module):
         self.reduce_output = reduce_output
 
         self.irreps_in = o3.Irreps(irreps_in) if irreps_in is not None else None
-        self.irreps_hidden = o3.Irreps(irreps_hidden)
+        self.irreps_hidden = o3.Irreps([(self.mul, (l, p)) for l in range(lmax + 1) for p in [-1, 1]])
         self.irreps_out = o3.Irreps(irreps_out)
         self.irreps_node_attr = o3.Irreps(irreps_node_attr) if irreps_node_attr is not None else o3.Irreps("0e")
-        self.irreps_edge_attr = o3.Irreps(irreps_edge_attr)
+        self.irreps_edge_attr = o3.Irreps.spherical_harmonics(lmax)
 
         self.input_has_node_in = (irreps_in is not None)
         self.input_has_node_attr = (irreps_node_attr is not None)
-
-        self.ext_z = ExtractIr(self.irreps_node_attr, '0e')
-        number_of_edge_features = number_of_basis + 2 * self.irreps_node_attr.count('0e')
 
         irreps = self.irreps_in if self.irreps_in is not None else o3.Irreps("0e")
 
@@ -145,7 +146,7 @@ class Network(torch.nn.Module):
                 self.irreps_node_attr,
                 self.irreps_edge_attr,
                 gate.irreps_in,
-                number_of_edge_features,
+                number_of_basis,
                 radial_layers,
                 radial_neurons,
                 num_neighbors
@@ -159,7 +160,7 @@ class Network(torch.nn.Module):
                 self.irreps_node_attr,
                 self.irreps_edge_attr,
                 self.irreps_out,
-                number_of_edge_features,
+                number_of_basis,
                 radial_layers,
                 radial_neurons,
                 num_neighbors
@@ -172,10 +173,17 @@ class Network(torch.nn.Module):
         else:
             batch = data['pos'].new_zeros(data['pos'].shape[0], dtype=torch.long)
 
-        edge_src = data['edge_index'][0]  # edge source
-        edge_dst = data['edge_index'][1]  # edge destination
-        edge_vec = data['edge_vec']
+        if 'edge_index' in data:
+            edge_src = data['edge_index'][0]  # edge source
+            edge_dst = data['edge_index'][1]  # edge destination
+            edge_vec = data['edge_vec']
         
+        else:
+            edge_index = radius_graph(data['pos'], self.max_radius, batch)
+            edge_src = edge_index[0]
+            edge_dst = edge_index[1]
+            edge_vec = data['pos'][edge_src] - data['pos'][edge_dst]
+
         return batch, edge_src, edge_dst, edge_vec
 
     def forward(self, data: Union[Data, Dict[str, torch.Tensor]]) -> torch.Tensor:
@@ -188,9 +196,8 @@ class Network(torch.nn.Module):
             - ``x`` the input features of the nodes, optional
             - ``z`` the attributes of the nodes, for instance the atom type, optional
             - ``batch`` the graph to which the node belong, optional
-        """        
+        """
         batch, edge_src, edge_dst, edge_vec = self.preprocess(data)
-
         edge_sh = o3.spherical_harmonics(self.irreps_edge_attr, edge_vec, True, normalization='component')
         edge_length = edge_vec.norm(dim=1)
         edge_length_embedded = soft_one_hot_linspace(
@@ -216,11 +223,8 @@ class Network(torch.nn.Module):
             assert self.irreps_node_attr == o3.Irreps("0e")
             z = data['pos'].new_ones((data['pos'].shape[0], 1))
 
-        scalar_z = self.ext_z(z)
-        edge_features = torch.cat([edge_length_embedded, scalar_z[edge_src], scalar_z[edge_dst]], dim=1)
-
         for lay in self.layers:
-            x = lay(x, z, edge_src, edge_dst, edge_attr, edge_features)
+            x = lay(x, z, edge_src, edge_dst, edge_attr, edge_length_embedded)
 
         if self.reduce_output:
             return scatter(x, batch, dim=0).div(self.num_nodes**0.5)
@@ -246,7 +250,7 @@ def visualize_layers(model):
             v.cpu().visualize(ax=ax[i,j])
             ax[i,j].text(0.7,-0.15,'--> to ' + layer_dst[k], fontsize=textsize-2, transform=ax[i,j].transAxes)
 
-    layer_dst = dict(zip(['sc', 'lin1', 'tp', 'lin2'], ['gate', 'tp', 'lin2', 'output']))
+    layer_dst = dict(zip(['sc', 'lin1', 'tp', 'lin2'], ['output', 'tp', 'lin2', 'output']))
     ops = layers[-1]._modules.copy()
     ops.pop('fc', None); ops.pop('alpha', None)
     for j, (k, v) in enumerate(ops.items()):

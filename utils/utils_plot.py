@@ -113,8 +113,11 @@ def build_sphericaltensors(features, irreps):
 def get_middle_feats(d, model, layer_idx=0, normalize=False):
     model.to('cpu')
     _ = model(d.cpu())
-    features = model.mp.layers[layer_idx].first_out
-    irreps = model.mp.layers[layer_idx].second.irreps_in
+    try: features = model.mp.layers[layer_idx].first_out
+    except:
+        features = model.layers[layer_idx].first_out
+        irreps = model.layers[layer_idx].second.irreps_in
+    else: irreps = model.mp.layers[layer_idx].second.irreps_in
 
     sts, st_feats = build_sphericaltensors(features, irreps)
     if normalize:

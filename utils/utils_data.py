@@ -193,7 +193,7 @@ def plot_example(df, i=12, label_edges=False):
     pos = dict(zip(list(g.nodes), [np.roll(k,2)[:-1][::-1] for k in entry.pos.numpy()]))
 
     # plot unit cell
-    fig, ax = plt.subplots(1,2, figsize=(14,10))
+    fig, ax = plt.subplots(1,2, figsize=(14,10), gridspec_kw={'width_ratios': [2,3]})
     atoms = Atoms(symbols=entry.symbol, positions=entry.pos.numpy(), cell=entry.lattice.squeeze().numpy(), pbc=True)
     symbols = np.unique(entry.symbol)
     z = dict(zip(symbols, range(len(symbols))))
@@ -202,10 +202,11 @@ def plot_example(df, i=12, label_edges=False):
     plot_atoms(atoms, ax[0], radii=0.25, colors=color, rotation=('0x,90y,0z'))
 
     # plot graph
-    nx.draw_networkx(g, ax=ax[1], labels=node_labels, pos=pos, font_family='lato', node_size=500, node_color=color)
+    nx.draw_networkx(g, ax=ax[1], labels=node_labels, pos=pos, font_family='lato', node_size=500, node_color=color,
+                     edge_color='gray')
     
     if label_edges:
-        nx.draw_networkx_edge_labels(g, ax=ax[1], edge_labels=edge_labels, pos=pos, label_pos=0.3, font_family='lato')
+        nx.draw_networkx_edge_labels(g, ax=ax[1], edge_labels=edge_labels, pos=pos, label_pos=0.5, font_family='lato')
     
     # format axes
     ax[0].set_xlabel(r'$x_1\ (\AA)$')
@@ -218,7 +219,6 @@ def plot_example(df, i=12, label_edges=False):
     ax[1].set_xlim(np.array(ax[1].get_xlim()) + pad)
     ax[1].set_ylim(np.array(ax[1].get_ylim()) + pad)
     fig.subplots_adjust(wspace=0.4)
-
 
 def plot_predictions(df, idx, title=None):    
     # get quartiles
@@ -320,3 +320,4 @@ def plot_partials(model, df, idx, device='cpu'):
     except: pass
     else: fig.supxlabel('Frequency', fontsize=fontsize, y=0.06)
     fig.subplots_adjust(hspace=0.8)
+    fig.savefig('predictions_partials.svg', bbox_inches='tight')

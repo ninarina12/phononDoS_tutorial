@@ -228,7 +228,7 @@ def plot_predictions(df, idx, title=None):
     iq = [0] + [np.argmin(np.abs(ds['mse'].values - k)) for k in quartiles]
     
     n = 7
-    s = np.concatenate([np.sort(np.random.randint(iq[k-1], iq[k], size=n)) for k in range(1,5)])
+    s = np.concatenate([np.sort(np.random.choice(np.arange(iq[k-1], iq[k], 1), size=n, replace=False)) for k in range(1,5)])
     x = df.iloc[0]['phfreq']
 
     fig, axs = plt.subplots(4,n+1, figsize=(13,3.5), gridspec_kw={'width_ratios': [0.7] + [1]*n})
@@ -271,11 +271,10 @@ def plot_predictions(df, idx, title=None):
     fig.subplots_adjust(hspace=0.6)
     if title: fig.suptitle(title, ha='center', y=1., fontsize=fontsize + 4)
 
-
 def plot_partials(model, df, idx, device='cpu'):
     # randomly sample r compounds from the dataset
     r = 6
-    ids = np.random.choice(df.iloc[idx][df.iloc[idx]['pdos'].str.len()>0].index.tolist(), size=r)
+    ids = np.random.choice(df.iloc[idx][df.iloc[idx]['pdos'].str.len()>0].index.tolist(), size=r, replace=False)
     
     # initialize figure axes
     N = df.iloc[ids]['species'].str.len().max()
@@ -320,4 +319,3 @@ def plot_partials(model, df, idx, device='cpu'):
     except: pass
     else: fig.supxlabel('Frequency', fontsize=fontsize, y=0.06)
     fig.subplots_adjust(hspace=0.8)
-    fig.savefig('predictions_partials.svg', bbox_inches='tight')

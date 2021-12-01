@@ -33,6 +33,7 @@ plt.rcParams['xtick.labelsize'] = fontsize
 plt.rcParams['ytick.labelsize'] = fontsize
 plt.rcParams['legend.fontsize'] = textsize
 
+
 class CustomCompose(torch.nn.Module):
     def __init__(self, first, second):
         super().__init__()

@@ -220,6 +220,7 @@ def plot_example(df, i=12, label_edges=False):
     ax[1].set_ylim(np.array(ax[1].get_ylim()) + pad)
     fig.subplots_adjust(wspace=0.4)
 
+
 def plot_predictions(df, idx, title=None):    
     # get quartiles
     i_mse = np.argsort(df.iloc[idx]['mse'])
@@ -270,6 +271,7 @@ def plot_predictions(df, idx, title=None):
     fig.tight_layout()
     fig.subplots_adjust(hspace=0.6)
     if title: fig.suptitle(title, ha='center', y=1., fontsize=fontsize + 4)
+
 
 def plot_partials(model, df, idx, device='cpu'):
     # randomly sample r compounds from the dataset

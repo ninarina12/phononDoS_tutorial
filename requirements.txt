@@ -10,3 +10,4 @@ torch-scatter==2.0.9
 torch-sparse==0.6.12
 torch-spline-conv==1.2.1
 torch-geometric==2.0.2
+plotly==5.3.1

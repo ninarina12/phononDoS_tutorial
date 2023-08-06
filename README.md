@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/423683286.svg)](https://zenodo.org/badge/latestdoi/423683286)
 ## Tutorial: Predicting phonon DoS with Euclidean neural networks
 ### 2021 MRS Fall Meeting | Symmetry-aware neural networks for the material sciences
 
